@@ -1,0 +1,45 @@
+name: Android13-5.15
+
+on:
+  workflow_dispatch:  # 手动触发工作流
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 使用 Ubuntu 最新版本的虚拟机环境
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3  # 获取代码仓库
+        
+      - name: Modify MY_LINUX_VERSION_CODE
+        run: |
+          sed -i '/#ifndef MY_LINUX_VERSION_CODE/a #define MY_LINUX_VERSION_CODE KERNEL_VERSION(5,15,41)' kerneldriver/ver_control.h
+      - name: Install repo tool
+        run: |
+          curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
+          chmod a+x /usr/local/bin/repo 
+      - name: Set up Android Kernel source
+        run: |
+          mkdir -p android-kernel && cd android-kernel
+          repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15 --no-repo-verify --depth=1
+          repo sync --force-sync --no-clone-bundle --no-tags -f -c -j32
+
+      - name: Copy kerneldriver
+        run: |
+          cd android-kernel
+          mkdir -p common/drivers 
+          cp -r ../kerneldriver common/drivers 
+      - name: Modify Makefile
+        run: |
+          cd android-kernel
+          echo "obj-y += kerneldriver/" >> common/drivers/Makefile
+      - name: Build Android Kernel
+        continue-on-error: true
+        run: |
+          cd android-kernel
+          BUILD_CONFIG=common/build.config.gki.aarch64 LTO=thin build/build.sh -j32
+      - name: Upload kerneldriver.ko
+        uses: actions/upload-artifact@v4
+        with:
+          name: kerneldriver.ko
+          path: android-kernel/out/android13-5.15/common/drivers/kerneldriver/kerneldriver.ko 
