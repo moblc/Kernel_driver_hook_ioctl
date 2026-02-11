@@ -33,7 +33,7 @@ jobs:
         continue-on-error: true
         run: |
           cd android-kernel
-          BUILD_CONFIG=common/build.config.gki.aarch64 LTO=thin build/build.sh -j32
+          BUILD_CONFIG=common/build.config.gki.aarch64 LTO=thin SKIP_EXT_MODULES=1 build/build.sh -j32
       - name: Upload kerneldriver.ko
         uses: actions/upload-artifact@v4
         with:
