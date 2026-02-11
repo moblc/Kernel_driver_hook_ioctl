@@ -10,10 +10,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3  # 获取代码仓库
-        
-      - name: Modify MY_LINUX_VERSION_CODE
-        run: |
-          sed -i '/#ifndef MY_LINUX_VERSION_CODE/a #define MY_LINUX_VERSION_CODE KERNEL_VERSION(5,4,61)' kerneldriver/ver_control.h
       - name: Install repo tool
         run: |
           curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
